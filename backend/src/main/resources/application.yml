@@ -1,0 +1,115 @@
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  # honour X-Forwarded-For from the internal nginx reverse proxy (trusted internal ranges only)
+  forward-headers-strategy: native
+  error:
+    include-message: never
+    include-stacktrace: never
+
+spring:
+  application:
+    name: nexus-nfv-backend
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/nexus_nfv?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8}
+    username: ${DB_USERNAME:nexus}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 15
+      connection-timeout: 10000
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+      hibernate.jdbc.batch_size: 50
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+  task:
+    scheduling:
+      pool:
+        size: 4
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+
+logging:
+  level:
+    root: INFO
+    com.nexus.nfv: INFO
+    org.apache.sshd: WARN
+
+nexus:
+  security:
+    # HMAC-SHA256 key, >= 32 bytes. MUST be supplied via environment in any shared deployment.
+    jwt-secret: ${NEXUS_JWT_SECRET:}
+    jwt-ttl-minutes: ${NEXUS_JWT_TTL_MINUTES:60}
+    max-failed-logins: 5
+    lockout-minutes: 15
+    cors-allowed-origins: ${NEXUS_CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+    # AES key (base64, 32 bytes) used to encrypt stored infrastructure credentials (NETCONF passwords).
+    credential-key: ${NEXUS_CREDENTIAL_KEY:}
+    bootstrap:
+      admin-username: ${NEXUS_ADMIN_USERNAME:admin}
+      admin-password: ${NEXUS_ADMIN_PASSWORD:}
+      admin-email: ${NEXUS_ADMIN_EMAIL:admin@nexus.local}
+      demo-users-password: ${NEXUS_DEMO_USERS_PASSWORD:}
+
+  orchestrator:
+    # docker = local NFV lab (Docker Engine API) | osm = Open Source MANO NBI | none = disabled
+    mode: ${NEXUS_ORCHESTRATOR_MODE:docker}
+    docker:
+      api-url: ${DOCKER_API_URL:http://localhost:2375}
+      vnf-image: ${NEXUS_VNF_IMAGE:nexus/fw-vnf:1.0.0}
+      mgmt-network: ${NEXUS_MGMT_NETWORK:nexus-mgmt}
+      lan-network: ${NEXUS_LAN_NETWORK:nexus-lan}
+      wan-network: ${NEXUS_WAN_NETWORK:nexus-dmz}
+      lan-cidr: ${NEXUS_LAN_CIDR:10.10.0.0/24}
+      wan-cidr: ${NEXUS_WAN_CIDR:10.20.0.0/24}
+      agent-port: 9443
+      netconf-enabled: ${NEXUS_VNF_NETCONF_ENABLED:true}
+    osm:
+      nbi-url: ${OSM_NBI_URL:}
+      username: ${OSM_USERNAME:admin}
+      password: ${OSM_PASSWORD:}
+      project: ${OSM_PROJECT:admin}
+      vim-account: ${OSM_VIM_ACCOUNT:}
+      nsd-id: ${OSM_NSD_ID:nexus_fw-ns}
+      verify-tls: ${OSM_VERIFY_TLS:true}
+
+  agent:
+    token: ${NEXUS_AGENT_TOKEN:}
+    connect-timeout-ms: 3000
+    read-timeout-ms: 8000
+
+  onos:
+    # real = ONOS REST API | demo = clearly labelled fixture topology (no controller)
+    mode: ${NEXUS_ONOS_MODE:real}
+    url: ${ONOS_URL:http://localhost:8181/onos/v1}
+    username: ${ONOS_USERNAME:onos}
+    password: ${ONOS_PASSWORD:}
+    app-id: org.nexus.nfv
+
+  monitoring:
+    poll-interval-ms: ${NEXUS_POLL_INTERVAL_MS:10000}
+    integration-check-interval-ms: 30000
+    detection-interval-ms: 15000

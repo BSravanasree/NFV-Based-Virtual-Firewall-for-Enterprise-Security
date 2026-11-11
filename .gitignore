@@ -1,0 +1,26 @@
+# secrets
+.env
+*.pem
+*.key
+
+# build output
+backend/target/
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+release/
+
+# local demo account credentials (never commit)
+.demo-credentials.txt
+__pycache__/
+*.pyc

@@ -1,0 +1,125 @@
+module nexus-firewall {
+  yang-version 1.1;
+  namespace "urn:nexus:nfv:firewall";
+  prefix nxfw;
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+
+  organization
+    "NEXUS NFV project";
+  contact
+    "NEXUS NFV maintainers";
+  description
+    "Configuration model of the NEXUS firewall VNF. The running datastore of this
+     module is enforced by the in-VNF agent as an nftables ruleset (table inet nexus_fw,
+     forward hook). Rules are evaluated in ascending priority order; the first match wins;
+     packets matching no rule receive the default action.";
+
+  revision 2026-11-01 {
+    description
+      "Initial revision.";
+  }
+
+  typedef port-spec {
+    type string {
+      pattern '[0-9]{1,5}(-[0-9]{1,5})?';
+    }
+    description
+      "A single transport port (e.g. 443) or an inclusive range (e.g. 1000-2000).";
+  }
+
+  typedef verdict {
+    type enumeration {
+      enum accept {
+        description "Forward the packet.";
+      }
+      enum drop {
+        description "Silently discard the packet.";
+      }
+    }
+  }
+
+  container firewall {
+    description
+      "Packet filtering policy of the VNF.";
+
+    leaf default-action {
+      type verdict;
+      default "drop";
+      description
+        "Verdict for packets that match no rule (default-deny recommended).";
+    }
+
+    leaf revision {
+      type uint64;
+      default "0";
+      description
+        "Policy revision assigned by the management platform.";
+    }
+
+    list rule {
+      key "id";
+      unique "priority";
+      max-elements 2000;
+      description
+        "Ordered filtering rules.";
+
+      leaf id {
+        type uint32 {
+          range "1..max";
+        }
+        description "Stable rule identifier assigned by the platform.";
+      }
+      leaf name {
+        type string {
+          length "1..64";
+        }
+      }
+      leaf priority {
+        type uint32 {
+          range "1..65535";
+        }
+        mandatory true;
+        description "Evaluation order; lower values are evaluated first.";
+      }
+      leaf action {
+        type verdict;
+        mandatory true;
+      }
+      leaf protocol {
+        type enumeration {
+          enum any;
+          enum tcp;
+          enum udp;
+          enum icmp;
+        }
+        default "any";
+      }
+      leaf source-prefix {
+        type inet:ipv4-prefix;
+      }
+      leaf destination-prefix {
+        type inet:ipv4-prefix;
+      }
+      leaf source-port {
+        when "../protocol = 'tcp' or ../protocol = 'udp'";
+        type port-spec;
+      }
+      leaf destination-port {
+        when "../protocol = 'tcp' or ../protocol = 'udp'";
+        type port-spec;
+      }
+      leaf enabled {
+        type boolean;
+        default "true";
+      }
+      leaf log {
+        type boolean;
+        default "true";
+        description "Log matching packets (NFLOG, rate-limited) for monitoring and detection.";
+      }
+    }
+  }
+}

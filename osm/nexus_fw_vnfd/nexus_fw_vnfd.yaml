@@ -1,0 +1,96 @@
+# ETSI SOL006 VNF descriptor – NEXUS firewall VNF (OSM Release 14+)
+vnfd:
+  id: nexus_fw-vnf
+  product-name: nexus_fw-vnf
+  description: NEXUS NFV Ubuntu 24.04 firewall VNF (nftables + REST agent + Netopeer2 NETCONF)
+  provider: NEXUS NFV
+  version: '1.0.0'
+  mgmt-cp: vnf-mgmt-ext
+
+  virtual-compute-desc:
+    - id: fw-compute
+      virtual-cpu:
+        num-virtual-cpu: 1
+      virtual-memory:
+        size: 1.0
+  virtual-storage-desc:
+    - id: fw-storage
+      size-of-storage: 10
+  sw-image-desc:
+    - id: ubuntu24.04
+      name: ubuntu24.04
+      image: ubuntu24.04          # cloud image registered in the VIM (e.g. noble-server-cloudimg-amd64)
+
+  vdu:
+    - id: fw-vdu
+      name: fw-vdu
+      description: Firewall VDU
+      cloud-init-file: cloud-init.yaml
+      sw-image-desc: ubuntu24.04
+      virtual-compute-desc: fw-compute
+      virtual-storage-desc:
+        - fw-storage
+      int-cpd:
+        - id: vdu-mgmt
+          virtual-network-interface-requirement:
+            - name: mgmt
+              virtual-interface:
+                type: PARAVIRT
+        - id: vdu-lan
+          virtual-network-interface-requirement:
+            - name: lan
+              virtual-interface:
+                type: PARAVIRT
+        - id: vdu-wan
+          virtual-network-interface-requirement:
+            - name: wan
+              virtual-interface:
+                type: PARAVIRT
+      monitoring-parameter:
+        - id: fw-cpu
+          name: fw-cpu
+          performance-metric: cpu_utilization
+        - id: fw-memory
+          name: fw-memory
+          performance-metric: average_memory_utilization
+        - id: fw-rx
+          name: fw-rx
+          performance-metric: packets_received
+
+  ext-cpd:
+    - id: vnf-mgmt-ext
+      int-cpd:
+        vdu-id: fw-vdu
+        cpd: vdu-mgmt
+    - id: vnf-lan-ext
+      int-cpd:
+        vdu-id: fw-vdu
+        cpd: vdu-lan
+      port-security-enabled: false   # the VNF forwards traffic for other addresses
+    - id: vnf-wan-ext
+      int-cpd:
+        vdu-id: fw-vdu
+        cpd: vdu-wan
+      port-security-enabled: false
+
+  df:
+    - id: default-df
+      instantiation-level:
+        - id: default-instantiation-level
+          vdu-level:
+            - vdu-id: fw-vdu
+              number-of-instances: 1
+      vdu-profile:
+        - id: fw-vdu
+          min-number-of-instances: 1
+          max-number-of-instances: 3
+      scaling-aspect:
+        - id: fw-scale-out
+          name: fw-scale-out
+          max-scale-level: 2
+          aspect-delta-details:
+            deltas:
+              - id: fw-delta
+                vdu-delta:
+                  - id: fw-vdu
+                    number-of-instances: 1

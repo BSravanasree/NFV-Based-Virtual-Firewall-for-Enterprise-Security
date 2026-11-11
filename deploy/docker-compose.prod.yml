@@ -1,0 +1,53 @@
+# =============================================================================
+# Production override for an Ubuntu VPS (full functionality incl. the firewall lab)
+#
+#   cp .env.example .env   # set secrets + PUBLIC_HOST (domain or <server-ip>.sslip.io) + ACME_EMAIL
+#   docker compose --profile build build fw-vnf-image
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml --profile lab up -d --build
+#
+# Only Caddy is published (80/443, automatic Let's Encrypt HTTPS). MySQL, the API port, the Docker socket
+# proxy, VNF agents and NETCONF stay on internal networks.
+# =============================================================================
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+services:
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    depends_on: [frontend]
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST:?set PUBLIC_HOST (domain or <ip>.sslip.io) in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [edge]
+    logging: *logging
+
+  frontend:
+    ports: !reset []
+    logging: *logging
+
+  backend:
+    ports: !reset []
+    environment:
+      NEXUS_CORS_ORIGINS: https://${PUBLIC_HOST}
+      SPRINGDOC_SWAGGERUI_ENABLED: ${PUBLIC_SWAGGER:-true}
+    logging: *logging
+
+  mysql:
+    logging: *logging
+
+  docker-proxy:
+    logging: *logging
+
+volumes:
+  caddy-data:
+  caddy-config:

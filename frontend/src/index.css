@@ -1,0 +1,231 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   NEXUS NFV design system – premium dark glass
+   Palette (single source of truth – use these tokens, never raw hex in pages)
+   ========================================================================== */
+@theme {
+  --font-sans: "Inter", "Segoe UI Variable", "Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* base surfaces */
+  --color-night: #080d1a;          /* background */
+  --color-night-2: #10182a;        /* secondary background */
+  --color-glass: rgb(255 255 255 / 0.055);
+  --color-fg: #f8fafc;             /* main text */
+  --color-fg-muted: #94a3b8;       /* secondary text */
+
+  /* brand */
+  --color-brand: #6c8cff;          /* primary accent */
+  --color-brand-violet: #a78bfa;   /* secondary accent */
+  --color-brand-cyan: #38d9ff;     /* cyan accent */
+  --color-ok: #34d399;
+  --color-warn: #fbbf24;
+  --color-danger: #fb7185;
+
+  /* legacy scale used across pages, remapped onto the glass system */
+  --color-ink-950: #080d1a;
+  --color-ink-900: #0c1324;
+  --color-ink-850: #10182a;
+  --color-ink-800: rgb(255 255 255 / 0.04);
+  --color-ink-750: rgb(255 255 255 / 0.065);
+  --color-ink-700: rgb(255 255 255 / 0.09);
+  --color-ink-600: rgb(255 255 255 / 0.14);
+  --color-ink-500: rgb(255 255 255 / 0.22);
+
+  --color-accent-200: #c9d4ff;
+  --color-accent-300: #a9bbff;
+  --color-accent-400: #8ba3ff;
+  --color-accent-500: #6c8cff;
+  --color-accent-600: #5a78f0;
+
+  --animate-fade-up: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-float: float 9s ease-in-out infinite;
+  --animate-pulse-soft: pulse-soft 2.4s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    50% { transform: translate3d(0, -14px, 0); }
+  }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-night);
+  background-image:
+    radial-gradient(1200px 600px at 10% -10%, rgb(108 140 255 / 0.12), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgb(167 139 250 / 0.09), transparent 60%),
+    radial-gradient(800px 600px at 50% 110%, rgb(56 217 255 / 0.06), transparent 60%);
+  background-attachment: fixed;
+  color: #e2e8f0;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* very subtle grain texture */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+::selection {
+  background: rgb(108 140 255 / 0.35);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.14) transparent;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+@layer components {
+  /* frosted glass surface */
+  .panel,
+  .glass {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.04));
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-radius: 1rem;
+    box-shadow:
+      0 1px 0 0 rgb(255 255 255 / 0.06) inset,
+      0 10px 40px -12px rgb(2 6 23 / 0.6);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
+  /* overlays (drawers, modals, menus): dense surface so content behind never competes with form text */
+  .glass-strong {
+    background: linear-gradient(180deg, rgb(20 29 50 / 0.97), rgb(13 20 37 / 0.97));
+    border: 1px solid rgb(255 255 255 / 0.1);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+  }
+  .glass-hover {
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s, box-shadow 0.25s;
+  }
+  .glass-hover:hover {
+    transform: translateY(-2px);
+    border-color: rgb(108 140 255 / 0.35);
+    box-shadow:
+      0 1px 0 0 rgb(255 255 255 / 0.08) inset,
+      0 18px 50px -14px rgb(108 140 255 / 0.35);
+  }
+  .glow-ring {
+    box-shadow: 0 0 0 1px rgb(108 140 255 / 0.45), 0 0 24px -4px rgb(108 140 255 / 0.55);
+  }
+  .text-gradient {
+    background: linear-gradient(100deg, #f8fafc 10%, #a9bbff 45%, #a78bfa 70%, #38d9ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .input {
+    @apply w-full rounded-lg border px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 transition-colors
+      focus:outline-none disabled:opacity-50;
+    background: rgb(8 13 26 / 0.55);
+    border-color: rgb(255 255 255 / 0.11);
+  }
+  .input:focus {
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px rgb(108 140 255 / 0.18);
+  }
+  select.input option {
+    background: #10182a;
+  }
+  .label {
+    @apply mb-1 block text-[11px] font-medium tracking-wider text-slate-400 uppercase;
+  }
+  .th {
+    @apply border-b border-ink-700 px-3 py-2.5 text-left text-[11px] font-semibold tracking-wider whitespace-nowrap text-slate-400 uppercase;
+  }
+  .td {
+    @apply border-b border-ink-800 px-3 py-2.5 text-sm text-slate-300;
+  }
+  tbody tr {
+    transition: background-color 0.15s;
+  }
+  .page-enter {
+    animation: var(--animate-fade-up);
+  }
+}
+
+/* ambient bubbles (decorative, behind content) */
+.bubble {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.55;
+  will-change: transform;
+  animation: var(--animate-float);
+}
+
+/* scroll-driven reveal: progressive enhancement, content is visible without support */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: reveal-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 20%;
+  }
+}
+@keyframes reveal-in {
+  from { opacity: 0; transform: translateY(var(--reveal-shift, 18px)); }
+  to { opacity: 1; transform: none; }
+}
+
+/* flowing connection lines in network diagrams */
+.flow-line {
+  stroke-dasharray: 6 10;
+  animation: flow 1.6s linear infinite;
+}
+@keyframes flow {
+  to { stroke-dashoffset: -32; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .flow-line,
+  .reveal {
+    animation: none !important;
+  }
+}

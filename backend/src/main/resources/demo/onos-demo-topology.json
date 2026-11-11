@@ -1,0 +1,74 @@
+{
+  "_comment": "DEMO FIXTURE - shaped like ONOS onos/v1 REST responses. Mirrors lab/sdn/nexus_topology.py. Not live data.",
+  "cluster": { "id": "demo-onos", "ip": "127.0.0.1", "status": "READY", "version": "2.7.0 (demo fixture)" },
+  "applications": [
+    { "name": "org.onosproject.openflow", "state": "ACTIVE", "version": "2.7.0" },
+    { "name": "org.onosproject.fwd", "state": "ACTIVE", "version": "2.7.0" },
+    { "name": "org.onosproject.hostprovider", "state": "ACTIVE", "version": "2.7.0" },
+    { "name": "org.onosproject.lldpprovider", "state": "ACTIVE", "version": "2.7.0" }
+  ],
+  "devices": [
+    { "id": "of:0000000000000001", "type": "SWITCH", "available": true, "role": "MASTER", "mfr": "Nicira, Inc.",
+      "hw": "Open vSwitch", "sw": "3.3.0", "serial": "None", "driver": "ovs", "chassisId": "1",
+      "annotations": { "channelId": "172.17.0.1:52110", "managementAddress": "172.17.0.1", "protocol": "OF_13", "name": "s1-lan" } },
+    { "id": "of:0000000000000002", "type": "SWITCH", "available": true, "role": "MASTER", "mfr": "Nicira, Inc.",
+      "hw": "Open vSwitch", "sw": "3.3.0", "serial": "None", "driver": "ovs", "chassisId": "2",
+      "annotations": { "channelId": "172.17.0.1:52112", "managementAddress": "172.17.0.1", "protocol": "OF_13", "name": "s2-dmz" } }
+  ],
+  "ports": {
+    "of:0000000000000001": [
+      { "port": "local", "isEnabled": false, "type": "copper", "portSpeed": 0, "annotations": { "portName": "s1" } },
+      { "port": "1", "isEnabled": true, "type": "copper", "portSpeed": 10000, "annotations": { "portName": "s1-eth1", "portMac": "6a:1f:00:00:01:01" } },
+      { "port": "2", "isEnabled": true, "type": "copper", "portSpeed": 10000, "annotations": { "portName": "s1-eth2", "portMac": "6a:1f:00:00:01:02" } },
+      { "port": "3", "isEnabled": true, "type": "copper", "portSpeed": 10000, "annotations": { "portName": "s1-eth3", "portMac": "6a:1f:00:00:01:03" } },
+      { "port": "4", "isEnabled": true, "type": "copper", "portSpeed": 10000, "annotations": { "portName": "s1-eth4", "portMac": "6a:1f:00:00:01:04" } }
+    ],
+    "of:0000000000000002": [
+      { "port": "local", "isEnabled": false, "type": "copper", "portSpeed": 0, "annotations": { "portName": "s2" } },
+      { "port": "1", "isEnabled": true, "type": "copper", "portSpeed": 10000, "annotations": { "portName": "s2-eth1", "portMac": "6a:1f:00:00:02:01" } },
+      { "port": "2", "isEnabled": true, "type": "copper", "portSpeed": 10000, "annotations": { "portName": "s2-eth2", "portMac": "6a:1f:00:00:02:02" } },
+      { "port": "3", "isEnabled": true, "type": "copper", "portSpeed": 10000, "annotations": { "portName": "s2-eth3", "portMac": "6a:1f:00:00:02:03" } }
+    ]
+  },
+  "portStatistics": {
+    "of:0000000000000001": { "statistics": [ { "device": "of:0000000000000001", "ports": [
+      { "port": 1, "packetsReceived": 1520, "packetsSent": 1488, "bytesReceived": 184220, "bytesSent": 1902233, "packetsRxDropped": 0, "packetsTxDropped": 0, "durationSec": 3600 },
+      { "port": 2, "packetsReceived": 412, "packetsSent": 98, "bytesReceived": 30120, "bytesSent": 7340, "packetsRxDropped": 0, "packetsTxDropped": 0, "durationSec": 3600 },
+      { "port": 3, "packetsReceived": 1590, "packetsSent": 1930, "bytesReceived": 1905120, "bytesSent": 214401, "packetsRxDropped": 0, "packetsTxDropped": 0, "durationSec": 3600 },
+      { "port": 4, "packetsReceived": 12, "packetsSent": 12, "bytesReceived": 1440, "bytesSent": 1440, "packetsRxDropped": 0, "packetsTxDropped": 0, "durationSec": 3600 } ] } ] },
+    "of:0000000000000002": { "statistics": [ { "device": "of:0000000000000002", "ports": [
+      { "port": 1, "packetsReceived": 1490, "packetsSent": 1505, "bytesReceived": 1900110, "bytesSent": 183900, "packetsRxDropped": 0, "packetsTxDropped": 0, "durationSec": 3600 },
+      { "port": 2, "packetsReceived": 1502, "packetsSent": 1488, "bytesReceived": 183400, "bytesSent": 1899870, "packetsRxDropped": 0, "packetsTxDropped": 0, "durationSec": 3600 },
+      { "port": 3, "packetsReceived": 12, "packetsSent": 12, "bytesReceived": 1440, "bytesSent": 1440, "packetsRxDropped": 0, "packetsTxDropped": 0, "durationSec": 3600 } ] } ] }
+  },
+  "hosts": [
+    { "id": "00:00:00:00:01:0A/None", "mac": "00:00:00:00:01:0A", "vlan": "None", "ipAddresses": ["10.0.1.10"],
+      "locations": [ { "elementId": "of:0000000000000001", "port": "1" } ], "annotations": { "name": "client1" } },
+    { "id": "00:00:00:00:01:0B/None", "mac": "00:00:00:00:01:0B", "vlan": "None", "ipAddresses": ["10.0.1.11"],
+      "locations": [ { "elementId": "of:0000000000000001", "port": "2" } ], "annotations": { "name": "client2" } },
+    { "id": "00:00:00:00:01:01/None", "mac": "00:00:00:00:01:01", "vlan": "None", "ipAddresses": ["10.0.1.1"],
+      "locations": [ { "elementId": "of:0000000000000001", "port": "3" } ], "annotations": { "name": "fw-vnf (lan)" } },
+    { "id": "00:00:00:00:02:01/None", "mac": "00:00:00:00:02:01", "vlan": "None", "ipAddresses": ["10.0.2.1"],
+      "locations": [ { "elementId": "of:0000000000000002", "port": "1" } ], "annotations": { "name": "fw-vnf (dmz)" } },
+    { "id": "00:00:00:00:02:0A/None", "mac": "00:00:00:00:02:0A", "vlan": "None", "ipAddresses": ["10.0.2.10"],
+      "locations": [ { "elementId": "of:0000000000000002", "port": "2" } ], "annotations": { "name": "server" } }
+  ],
+  "links": [
+    { "src": { "port": "4", "device": "of:0000000000000001" }, "dst": { "port": "3", "device": "of:0000000000000002" }, "type": "DIRECT", "state": "ACTIVE" },
+    { "src": { "port": "3", "device": "of:0000000000000002" }, "dst": { "port": "4", "device": "of:0000000000000001" }, "type": "DIRECT", "state": "ACTIVE" }
+  ],
+  "flows": [
+    { "id": "281475000000001", "deviceId": "of:0000000000000001", "appId": "org.onosproject.core", "priority": 40000, "tableId": 0,
+      "timeout": 0, "isPermanent": true, "state": "ADDED", "packets": 128, "bytes": 7680, "life": 3600,
+      "selector": { "criteria": [ { "type": "ETH_TYPE", "ethType": "0x88cc" } ] },
+      "treatment": { "instructions": [ { "type": "OUTPUT", "port": "CONTROLLER" } ], "clearDeferred": true } },
+    { "id": "281475000000002", "deviceId": "of:0000000000000001", "appId": "org.onosproject.core", "priority": 40000, "tableId": 0,
+      "timeout": 0, "isPermanent": true, "state": "ADDED", "packets": 44, "bytes": 2640, "life": 3600,
+      "selector": { "criteria": [ { "type": "ETH_TYPE", "ethType": "0x0806" } ] },
+      "treatment": { "instructions": [ { "type": "OUTPUT", "port": "CONTROLLER" } ], "clearDeferred": true } },
+    { "id": "281475000000003", "deviceId": "of:0000000000000002", "appId": "org.onosproject.core", "priority": 40000, "tableId": 0,
+      "timeout": 0, "isPermanent": true, "state": "ADDED", "packets": 120, "bytes": 7200, "life": 3600,
+      "selector": { "criteria": [ { "type": "ETH_TYPE", "ethType": "0x88cc" } ] },
+      "treatment": { "instructions": [ { "type": "OUTPUT", "port": "CONTROLLER" } ], "clearDeferred": true } }
+  ]
+}

@@ -1,0 +1,33 @@
+# ETSI SOL006 NS descriptor – one firewall VNF between a LAN and a DMZ network
+nsd:
+  nsd:
+    - id: nexus_fw-ns
+      name: nexus_fw-ns
+      designer: NEXUS NFV
+      version: '1.0.0'
+      description: NEXUS virtual firewall network service (mgmt + LAN + DMZ)
+      vnfd-id:
+        - nexus_fw-vnf
+      virtual-link-desc:
+        - id: mgmtnet
+          mgmt-network: true
+        - id: lannet
+        - id: wannet
+      df:
+        - id: default-df
+          vnf-profile:
+            - id: '1'
+              vnfd-id: nexus_fw-vnf
+              virtual-link-connectivity:
+                - virtual-link-profile-id: mgmtnet
+                  constituent-cpd-id:
+                    - constituent-base-element-id: '1'
+                      constituent-cpd-id: vnf-mgmt-ext
+                - virtual-link-profile-id: lannet
+                  constituent-cpd-id:
+                    - constituent-base-element-id: '1'
+                      constituent-cpd-id: vnf-lan-ext
+                - virtual-link-profile-id: wannet
+                  constituent-cpd-id:
+                    - constituent-base-element-id: '1'
+                      constituent-cpd-id: vnf-wan-ext

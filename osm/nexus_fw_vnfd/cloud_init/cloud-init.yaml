@@ -1,0 +1,48 @@
+#cloud-config
+# Bootstraps the NEXUS firewall agent on an Ubuntu 24.04 cloud image.
+# OSM substitutes {{ ... }} from the NS instantiation parameters (additionalParamsForVnf):
+#   agent_token, lan_cidr, wan_cidr, agent_url (location of nexus_agent.py, e.g. an internal artifact server)
+package_update: true
+packages:
+  - nftables
+  - ulogd2
+  - ulogd2-json
+  - python3
+  - curl
+write_files:
+  - path: /etc/sysctl.d/90-nexus-forward.conf
+    content: |
+      net.ipv4.ip_forward=1
+      net.ipv4.conf.all.rp_filter=0
+  - path: /etc/nexus-agent/agent.env
+    permissions: '0600'
+    content: |
+      NEXUS_AGENT_TOKEN={{ agent_token }}
+      NEXUS_LAN_CIDR={{ lan_cidr }}
+      NEXUS_WAN_CIDR={{ wan_cidr }}
+  - path: /etc/systemd/system/nexus-agent.service
+    content: |
+      [Unit]
+      Description=NEXUS firewall VNF agent
+      After=network-online.target ulogd2.service
+      Wants=network-online.target
+      [Service]
+      EnvironmentFile=/etc/nexus-agent/agent.env
+      ExecStart=/usr/bin/python3 -u /opt/nexus-agent/nexus_agent.py
+      Restart=on-failure
+      NoNewPrivileges=true
+      ProtectHome=true
+      ProtectSystem=strict
+      ReadWritePaths=/var/lib/nexus-agent /var/log/ulog
+      CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+      AmbientCapabilities=CAP_NET_ADMIN
+      [Install]
+      WantedBy=multi-user.target
+runcmd:
+  - sysctl --system
+  - mkdir -p /opt/nexus-agent /var/lib/nexus-agent /var/log/ulog
+  - curl -fsSL "{{ agent_url }}" -o /opt/nexus-agent/nexus_agent.py
+  - curl -fsSL "{{ agent_url | replace('agent/nexus_agent.py', 'ulogd.conf') }}" -o /etc/ulogd.conf
+  - systemctl restart ulogd2
+  - systemctl daemon-reload
+  - systemctl enable --now nexus-agent

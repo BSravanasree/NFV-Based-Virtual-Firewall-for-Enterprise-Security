@@ -1,0 +1,191 @@
+# =============================================================================
+# NEXUS NFV – application stack (+ optional NFV lab)
+#
+#   cp .env.example .env            # then set every secret
+#   docker compose --profile build build fw-vnf-image   # Ubuntu firewall VNF image
+#   docker compose --profile lab up -d --build          # app + lab clients/server
+#
+# UI: http://localhost:3000   API/Swagger: http://localhost:8080/swagger-ui.html
+# =============================================================================
+name: nexus-nfv
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
+    environment:
+      MYSQL_DATABASE: nexus_nfv
+      MYSQL_USER: nexus
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks: [app]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  # The backend never sees the Docker socket: this proxy only exposes container/network/image endpoints.
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      NETWORKS: 1
+      IMAGES: 1
+      VERSION: 1
+      INFO: 1
+      POST: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [control]
+
+  backend:
+    build: ./backend
+    image: nexus/backend:1.0.0
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      docker-proxy:
+        condition: service_started
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/nexus_nfv?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+      DB_USERNAME: nexus
+      DB_PASSWORD: ${DB_PASSWORD}
+      NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:?set NEXUS_JWT_SECRET in .env}
+      NEXUS_CREDENTIAL_KEY: ${NEXUS_CREDENTIAL_KEY:?set NEXUS_CREDENTIAL_KEY in .env}
+      NEXUS_AGENT_TOKEN: ${NEXUS_AGENT_TOKEN:?set NEXUS_AGENT_TOKEN in .env}
+      NEXUS_ADMIN_USERNAME: ${NEXUS_ADMIN_USERNAME:-admin}
+      NEXUS_ADMIN_PASSWORD: ${NEXUS_ADMIN_PASSWORD:?set NEXUS_ADMIN_PASSWORD in .env}
+      NEXUS_DEMO_USERS_PASSWORD: ${NEXUS_DEMO_USERS_PASSWORD:-}
+      NEXUS_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      NEXUS_ORCHESTRATOR_MODE: ${NEXUS_ORCHESTRATOR_MODE:-docker}
+      DOCKER_API_URL: http://docker-proxy:2375
+      NEXUS_VNF_IMAGE: ${NEXUS_VNF_IMAGE:-nexus/fw-vnf:1.0.0}
+      NEXUS_VNF_NETCONF_ENABLED: ${NEXUS_VNF_NETCONF_ENABLED:-true}
+      NEXUS_ONOS_MODE: ${NEXUS_ONOS_MODE:-demo}
+      ONOS_URL: ${ONOS_URL:-http://onos:8181/onos/v1}
+      ONOS_USERNAME: ${ONOS_USERNAME:-onos}
+      ONOS_PASSWORD: ${ONOS_PASSWORD:-}
+      OSM_NBI_URL: ${OSM_NBI_URL:-}
+      OSM_USERNAME: ${OSM_USERNAME:-admin}
+      OSM_PASSWORD: ${OSM_PASSWORD:-}
+      OSM_PROJECT: ${OSM_PROJECT:-admin}
+      OSM_VIM_ACCOUNT: ${OSM_VIM_ACCOUNT:-}
+      OSM_VERIFY_TLS: ${OSM_VERIFY_TLS:-true}
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      app: {}
+      control: {}
+      edge: {}
+      mgmt:
+        ipv4_address: 10.30.0.10
+
+  frontend:
+    build: ./frontend
+    image: nexus/frontend:1.0.0
+    restart: unless-stopped
+    depends_on: [backend]
+    ports:
+      - "3000:80"
+    networks: [edge]
+
+  # ---------------------------------------------------------------- VNF image (build only)
+  fw-vnf-image:
+    build: ./vnf-firewall
+    image: ${NEXUS_VNF_IMAGE:-nexus/fw-vnf:1.0.0}
+    profiles: [build]
+    entrypoint: ["true"]
+
+  # ---------------------------------------------------------------- NFV lab (profile "lab")
+  # LAN 10.10.0.0/24 (clients)  ──  firewall VNF (.254 on both)  ──  DMZ 10.20.0.0/24 (server)
+  # The firewall VNF itself is deployed by the platform (VNF Management → Deploy).
+  client1:
+    build: ./lab/node
+    image: nexus/lab-node:1.0.0
+    profiles: [lab]
+    container_name: nexus-lab-client1
+    hostname: client1
+    cap_add: [NET_ADMIN]
+    environment:
+      ROLE: client
+      ROUTE_CIDR: 10.20.0.0/24
+      ROUTE_VIA: 10.10.0.254
+    networks:
+      lan:
+        ipv4_address: 10.10.0.11
+
+  client2:
+    image: nexus/lab-node:1.0.0
+    profiles: [lab]
+    depends_on: [client1]
+    container_name: nexus-lab-client2
+    hostname: client2
+    cap_add: [NET_ADMIN]
+    environment:
+      ROLE: client
+      ROUTE_CIDR: 10.20.0.0/24
+      ROUTE_VIA: 10.10.0.254
+    networks:
+      lan:
+        ipv4_address: 10.10.0.12
+
+  server:
+    image: nexus/lab-node:1.0.0
+    profiles: [lab]
+    depends_on: [client1]
+    container_name: nexus-lab-server
+    hostname: server
+    cap_add: [NET_ADMIN]
+    environment:
+      ROLE: server
+      ROUTE_CIDR: 10.10.0.0/24
+      ROUTE_VIA: 10.20.0.254
+    networks:
+      dmz:
+        ipv4_address: 10.20.0.10
+
+  # ---------------------------------------------------------------- optional ONOS controller (profile "sdn")
+  # Requires ~2 GB RAM. Set NEXUS_ONOS_MODE=real and ONOS_PASSWORD=rocks (ONOS default) in .env.
+  onos:
+    image: onosproject/onos:2.7-latest
+    profiles: [sdn]
+    environment:
+      ONOS_APPS: drivers,openflow,fwd,hostprovider,lldpprovider,gui2
+    ports:
+      - "127.0.0.1:8181:8181"
+      - "6653:6653"
+    networks: [edge]
+
+networks:
+  app:
+    internal: true
+  control:
+    internal: true
+  edge: {}
+  mgmt:
+    name: nexus-mgmt
+    internal: true
+    ipam:
+      config: [{ subnet: 10.30.0.0/24 }]
+  lan:
+    name: nexus-lan
+    # not 'internal': Docker drops bridged packets whose destination lies outside an internal
+    # network's subnet, which would break routing through the firewall VNF (service chaining)
+    ipam:
+      config: [{ subnet: 10.10.0.0/24 }]
+  dmz:
+    name: nexus-dmz
+    # not 'internal': Docker drops bridged packets whose destination lies outside an internal
+    # network's subnet, which would break routing through the firewall VNF (service chaining)
+    ipam:
+      config: [{ subnet: 10.20.0.0/24 }]
+
+volumes:
+  mysql-data:
